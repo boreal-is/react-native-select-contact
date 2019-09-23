@@ -32,7 +32,9 @@ export interface Contact {
     middleName?: string,
     phones: PhoneEntry[],
     emails: EmailEntry[],
-    postalAddresses: AddressEntry[]
+    postalAddresses: AddressEntry[],
+    photoFileUrl?: string,
+    photoMimeType?: string
 }
 
 export interface ContactPhoneSelection {

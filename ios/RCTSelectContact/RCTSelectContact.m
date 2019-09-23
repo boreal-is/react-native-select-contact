@@ -5,6 +5,7 @@
 
 @import Foundation;
 #import "RCTSelectContact.h"
+#import <MobileCoreServices/MobileCoreServices.h>
 @interface RCTSelectContact()
 
 @property(nonatomic, retain) RCTPromiseResolveBlock _resolve;
@@ -58,6 +59,21 @@ RCT_EXPORT_METHOD(openContactSelection:(RCTPromiseResolveBlock)resolve rejecter:
   [contactData setValue:contact.givenName forKey:@"givenName"];
   [contactData setValue:contact.middleName forKey:@"middleName"];
   [contactData setValue:contact.familyName forKey:@"familyName"];
+  if (contact.imageDataAvailable) {
+    NSString *mime = [self getMimeType: contact.imageData];
+    NSString* uti = (__bridge_transfer NSString*)UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, (__bridge CFStringRef)mime, NULL);
+    NSString* extension = (__bridge_transfer NSString*)UTTypeCopyPreferredTagWithClass((__bridge CFStringRef)uti, kUTTagClassFilenameExtension);
+    
+    if (mime != nil && extension != nil) {
+      NSURL *temporaryDirectoryURL = [NSURL fileURLWithPath: NSTemporaryDirectory()
+                                                isDirectory: YES];
+      NSString *fileName = [[NSProcessInfo processInfo] globallyUniqueString];
+      NSURL *temporaryFileURL = [[temporaryDirectoryURL URLByAppendingPathComponent:fileName] URLByAppendingPathExtension:extension];
+      [contact.imageData writeToURL:temporaryFileURL atomically:true];
+      [contactData setValue:[temporaryFileURL absoluteString] forKey:@"photoFileUrl"];
+      [contactData setValue:mime forKey:@"photoMimeType"];
+    }
+  }
   
   //Return phone numbers
   NSMutableArray* phoneEntries = [contactData valueForKey:@"phones"];
@@ -95,6 +111,23 @@ RCT_EXPORT_METHOD(openContactSelection:(RCTPromiseResolveBlock)resolve rejecter:
   }
   
   self._resolve(contactData);
+}
+
+- (NSString*) getMimeType:(NSData*) imageData {
+  uint8_t c;
+  [imageData getBytes:&c length:1];
+  switch (c) {
+    case 0xFF:
+      return @"image/jpeg";
+      break;
+    case 0x89:
+      return @"image/png";
+      break;
+    case 0x47:
+      return @"image/gif";
+      break;
+  }
+  return nil;
 }
 
 -(NSString *) getFullNameForFirst:(NSString *)fName middle:(NSString *)mName last:(NSString *)lName {

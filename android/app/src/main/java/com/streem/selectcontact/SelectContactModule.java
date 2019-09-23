@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
@@ -21,6 +22,15 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.UUID;
 
 public class SelectContactModule extends ReactContextBaseJavaModule implements ActivityEventListener {
 
@@ -121,6 +131,14 @@ public class SelectContactModule extends ReactContextBaseJavaModule implements A
                             addEmailEntry(emails, cursor, activity);
                             foundData = true;
                             break;
+                        case ContactsContract.CommonDataKinds.Photo
+                                .CONTENT_ITEM_TYPE:
+                            addPhotoData(contactData, cursor);
+                            foundData = true;
+                            break;
+                        default:
+                            break;
+
                     }
                 } while (cursor.moveToNext());
             }
@@ -165,7 +183,8 @@ public class SelectContactModule extends ReactContextBaseJavaModule implements A
                 Entity.MIMETYPE,
                 Entity.DATA1,
                 Entity.DATA2,
-                Entity.DATA3
+                Entity.DATA3,
+                Entity.PHOTO_URI
         };
         String sortOrder = Entity.RAW_CONTACT_ID + " ASC";
         Cursor cursor = this.contentResolver.query(contactUri, projection, null, null, sortOrder);
@@ -196,6 +215,34 @@ public class SelectContactModule extends ReactContextBaseJavaModule implements A
         if (middleNameColumn != -1) {
             String middleName = cursor.getString(middleNameColumn);
             contactData.putString("middleName", middleName);
+        }
+    }
+
+    private void addPhotoData(WritableMap contactData, Cursor cursor) {
+        int photoUriIndex = cursor.getColumnIndex(Entity.PHOTO_URI);
+        Uri photoContentUri = Uri.parse(cursor.getString(photoUriIndex));
+        String mime = this.contentResolver.getType(photoContentUri);
+        try {
+            InputStream input = this.contentResolver.openInputStream(photoContentUri);
+            if (input == null) {
+                return;
+            }
+            File file = File.createTempFile("contact-import", ".jpg", getReactApplicationContext().getCacheDir());
+            OutputStream output = new FileOutputStream(file);
+            try {
+                byte[] buffer = new byte[4 * 1024];
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, read);
+                }
+                contactData.putString("photoFileUrl", "file://" + file.getAbsolutePath());
+                contactData.putString("photoMimeType", mime);
+            } finally {
+                output.close();
+            }
+            input.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
