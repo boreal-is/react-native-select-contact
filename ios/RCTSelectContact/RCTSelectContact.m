@@ -59,6 +59,8 @@ RCT_EXPORT_METHOD(openContactSelection:(RCTPromiseResolveBlock)resolve rejecter:
   [contactData setValue:contact.givenName forKey:@"givenName"];
   [contactData setValue:contact.middleName forKey:@"middleName"];
   [contactData setValue:contact.familyName forKey:@"familyName"];
+  [contactData setValue:contact.organizationName forKey:@"organisationName"]
+  [contactData setValue:contact.jobTitle forKey:@"positionName"]
   if (contact.imageDataAvailable) {
     NSString *mime = [self getMimeType: contact.imageData];
     NSString* uti = (__bridge_transfer NSString*)UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, (__bridge CFStringRef)mime, NULL);

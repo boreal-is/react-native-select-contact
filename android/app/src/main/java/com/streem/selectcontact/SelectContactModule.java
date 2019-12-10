@@ -24,13 +24,10 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.util.UUID;
 
 public class SelectContactModule extends ReactContextBaseJavaModule implements ActivityEventListener {
 
@@ -116,17 +113,14 @@ public class SelectContactModule extends ReactContextBaseJavaModule implements A
                             addNameData(contactData, cursor);
                             foundData = true;
                             break;
-
                         case StructuredPostal.CONTENT_ITEM_TYPE:
                             addPostalData(postalAddresses, cursor, activity);
                             foundData = true;
                             break;
-
                         case Phone.CONTENT_ITEM_TYPE:
                             addPhoneEntry(phones, cursor, activity);
                             foundData = true;
                             break;
-
                         case Email.CONTENT_ITEM_TYPE:
                             addEmailEntry(emails, cursor, activity);
                             foundData = true;
@@ -134,6 +128,10 @@ public class SelectContactModule extends ReactContextBaseJavaModule implements A
                         case ContactsContract.CommonDataKinds.Photo
                                 .CONTENT_ITEM_TYPE:
                             addPhotoData(contactData, cursor);
+                            foundData = true;
+                            break;
+                        case ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE:
+                            addCompanyData(contactData, cursor);
                             foundData = true;
                             break;
                         default:
@@ -312,6 +310,13 @@ public class SelectContactModule extends ReactContextBaseJavaModule implements A
         emailEntry.putString("type", String.valueOf(typeLabel));
 
         emails.pushMap(emailEntry);
+    }
+
+    private void addCompanyData(WritableMap contactData, Cursor cursor) {
+        String org = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Organization.COMPANY));
+        String pos = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Organization.TITLE));
+        contactData.putString("organisationName", org);
+        contactData.putString("positionName", pos);
     }
 
     @Override
