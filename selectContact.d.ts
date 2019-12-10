@@ -34,7 +34,9 @@ export interface Contact {
     emails: EmailEntry[],
     postalAddresses: AddressEntry[],
     photoFileUrl?: string,
-    photoMimeType?: string
+    photoMimeType?: string,
+    organisationName?: string,
+    positionName?: string,
 }
 
 export interface ContactPhoneSelection {
