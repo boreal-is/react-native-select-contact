@@ -182,6 +182,7 @@ public class SelectContactModule extends ReactContextBaseJavaModule implements A
                 Entity.DATA1,
                 Entity.DATA2,
                 Entity.DATA3,
+                Entity.DATA4,
                 Entity.PHOTO_URI
         };
         String sortOrder = Entity.RAW_CONTACT_ID + " ASC";
